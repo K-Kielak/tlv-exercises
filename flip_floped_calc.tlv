@@ -19,7 +19,7 @@
    $op[1:0] = $op_rand[1:0];
 
    $sum[31:0] = $val1 + $val2;
-   $diff[31:0] = $val1 - $val2;
+   $diff[31:0] = $val2 > $val1 ? 0 : $val1 - $val2;
    $prod[31:0] = $val1 * $val2;
    $quot[31:0] = $val1 / $val2;
    
