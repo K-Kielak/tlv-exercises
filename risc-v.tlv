@@ -49,21 +49,35 @@
    `READONLY_MEM($pc, $$instr[31:0]);
    
    // Decode instruction
-   $is_u_instr = $instr[6:0] ==? 7'b0x10111;
+   $opcode[6:0] = $instr[6:0];
+   $is_u_instr = $opcode ==? 7'b0x_101_11;
+   $is_i_instr = $opcode ==? 7'b00_x0x_11 ||
+                 $opcode == 7'b11_001_11;
+   $is_r_instr = $opcode == 7'b01_011_11 ||
+                 $opcode == 7'b01_100_11 ||
+                 $opcode == 7'b01_110_11 ||
+                 $opcode == 7'b10_100_11;
+   $is_s_instr = $opcode ==? 7'b01_00x_11;
+   $is_b_instr = $opcode == 7'b11_000_11;
+   $is_j_instr = $opcode == 7'b11_011_11;
    
-   $is_i_instr = $instr[6:0] ==? 7'b00x0x11 ||
-                 $instr[6:0] == 7'b1100111;
+   $rs1[4:0] = $instr[19:15];
+   $rs2[4:0] = $instr[24:20];
+   $rd[4:0] = $instr[11:7];
+   $funct3[2:0] = $instr[14:12];
+   $imm[31:0] =
+      $is_i_instr ? {{21{$instr[31]}}, $instr[30:20]} :
+      $is_s_instr ? {{21{$instr[31]}}, $instr[30:25], $instr[11:7]} :
+      $is_b_instr ? {{20{$instr[31]}}, $instr[7], $instr[30:25], $instr[11:8], 1'b0} :
+      $is_u_instr ? {$instr[31:12], 12'b0} :
+      $is_j_instr ? {{12{$instr[31]}}, $instr[19:12], $instr[20], $instr[30:21], 1'b0} :
+      32'b0;  // Default
    
-   $is_r_instr = $instr[6:0] == 7'b0101111 ||
-                 $instr[6:0] == 7'b0110011 ||
-                 $instr[6:0] == 7'b0111011 ||
-                 $instr[6:0] == 7'b1010011;
-   
-   $is_s_instr = $instr[6:0] ==? 7'b0100x11;
-   
-   $is_b_instr = $instr[6:0] == 7'b1100011;
-   
-   $is_j_instr = $instr[6:0] == 7'b1101111;
+   $rs1_valid = $is_r_type || $is_i_type || $is_s_type || $is_b_type;
+   $rs2_valid = $is_r_type || $is_s_type || $is_b_type;
+   $rd_valid = $is_r_type || $is_i_type || $is_u_type || $is_j_type;
+   $funct3_valid = $is_r_type || $is_i_type || $is_s_type || $is_b_type;
+   $imm_valid = $is_i_type || $is_s_type || $is_b_type || $is_u_type || $is_j_type;
    
    // Assert these to end simulation (before Makerchip cycle limit).
    *passed = 1'b0;
