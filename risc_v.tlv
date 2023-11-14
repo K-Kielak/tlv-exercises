@@ -11,7 +11,7 @@
    m4_define(['M4_MAX_CYC'], 80)
    //---------------------------------------------------------------------------------
             
- 	`define BYTE 4;
+   `define BYTE 4;
 \SV
    m4_makerchip_module   // (Expanded in Nav-TLV pane.)
    /* verilator lint_on WIDTH */
