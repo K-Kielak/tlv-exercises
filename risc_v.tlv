@@ -58,8 +58,6 @@
    $rs1_valid = $is_r_instr || $is_i_instr || $is_s_instr || $is_b_instr;
    $rs2_valid = $is_r_instr || $is_s_instr || $is_b_instr;
    $rd_valid = $is_r_instr || $is_i_instr || $is_u_instr || $is_j_instr;
-   $funct3_valid = $is_r_instr || $is_i_instr || $is_s_instr || $is_b_instr;
-   $imm_valid = $is_i_instr || $is_s_instr || $is_b_instr || $is_u_instr || $is_j_instr;
    
    $dec_bits[10:0] = {$instr[30], $funct3, $opcode};
    
@@ -105,11 +103,12 @@
    $sra_rslt[63:0] = $sign_extended_src1 >> $src2_value[4:0];
    $srai_rslt[63:0] = $sign_extended_src1 >> $imm[4:0];
    
-   $result[31:0] =
+   $alu_result[31:0] =
       $is_andi ? $src1_value & $imm :
       $is_ori ? $src1_value | $imm :
       $is_xori ? $src1_value ^ $imm :
-      $is_addi ? $src1_value + $imm :
+      // We reuse ALU for calculating load/store address (which is src1_value + imm)
+      $is_addi | $is_store | $is_load ? $src1_value + $imm :
       $is_slli ? $src1_value << $imm[4:0] :
       $is_srli ? $src1_value >> $imm[4:0] :
       $is_and ? $src1_value & $src2_value :
@@ -151,12 +150,15 @@
       1'b0;
    $br_tgt_pc[31:0] = $is_jalr ? $src1_value + $imm : $pc + $imm;
    
+   // ALU or mem?
+   $result[31:0] = $is_load ? $ld_data : $alu_result;
+   
    // Assert these to end simulation (before Makerchip cycle limit).
    m4+tb()
    *failed = *cyc_cnt > M4_MAX_CYC;
    
    m4+rf(32, 32, $reset, $rd_valid, $rd, $result, $rs1_valid, $rs1, $src1_value, $rs2_valid, $rs2, $src2_value)
-   //m4+dmem(32, 32, $reset, $addr[4:0], $wr_en, $wr_data[31:0], $rd_en, $rd_data)
+   m4+dmem(32, 32, $reset, $alu_result[4:0] / 4, $is_store, $src2_value, $is_load, $ld_data)
    m4+cpu_viz()
 \SV
    endmodule
