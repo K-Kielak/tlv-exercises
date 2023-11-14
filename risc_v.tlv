@@ -1,19 +1,13 @@
 \m4_TLV_version 1d: tl-x.org
 \SV
-   // This code can be found in: https://github.com/stevehoover/LF-Building-a-RISC-V-CPU-Core/risc-v_shell.tlv
-   
    m4_include_lib(['https://raw.githubusercontent.com/stevehoover/LF-Building-a-RISC-V-CPU-Core/main/lib/risc-v_shell_lib.tlv'])
-
-
-
-   //---------------------------------------------------------------------------------
    m4_test_prog()
    m4_define(['M4_MAX_CYC'], 80)
-   //---------------------------------------------------------------------------------
-            
    `define BYTE 4;
 \SV
-   m4_makerchip_module   // (Expanded in Nav-TLV pane.)
+   // Macro providing required top-level module definition, random
+   // stimulus support, and Verilator config.
+   m4_makerchip_module
    /* verilator lint_on WIDTH */
 \TLV
    

@@ -3,7 +3,7 @@
 \SV
    // Macro providing required top-level module definition, random
    // stimulus support, and Verilator config.
-   m5_makerchip_module   // (Expanded in Nav-TLV pane.)
+   m5_makerchip_module   
    /* verilator lint_on WIDTH */
    m4_include_lib(['https://raw.githubusercontent.com/stevehoover/LF-Building-a-RISC-V-CPU-Core/main/lib/calc_viz.tlv'])
 \TLV
