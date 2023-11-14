@@ -1,3 +1,4 @@
-Personal repository for playing with transaction-level verilog leading up to RISC-V CPU architecture.
+Personal repository for learning Verilog and Transaction-Level Verilog (TLV).
 
-Follows course from: https://github.com/stevehoover/LF-Building-a-RISC-V-CPU-Core
+Courses that inspired some of the code:
+  - RISC-V in TLV: https://github.com/stevehoover/LF-Building-a-RISC-V-CPU-Core
