@@ -41,10 +41,29 @@
    
    $reset = *reset;
    
+   // Program counter
    $pc[31:0] = >>1$next_pc;
    $next_pc[31:0] = $reset ? 0 : $pc + `BYTE;
    
+   // Load instruction
    `READONLY_MEM($pc, $$instr[31:0]);
+   
+   // Decode instruction
+   $is_u_instr = $instr[6:0] ==? 7'b0x10111;
+   
+   $is_i_instr = $instr[6:0] ==? 7'b00x0x11 ||
+                 $instr[6:0] == 7'b1100111;
+   
+   $is_r_instr = $instr[6:0] == 7'b0101111 ||
+                 $instr[6:0] == 7'b0110011 ||
+                 $instr[6:0] == 7'b0111011 ||
+                 $instr[6:0] == 7'b1010011;
+   
+   $is_s_instr = $instr[6:0] ==? 7'b0100x11;
+   
+   $is_b_instr = $instr[6:0] == 7'b1100011;
+   
+   $is_j_instr = $instr[6:0] == 7'b1101111;
    
    // Assert these to end simulation (before Makerchip cycle limit).
    *passed = 1'b0;
