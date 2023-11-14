@@ -89,6 +89,12 @@
    $is_addi = $dec_bits ==? 11'bx_000_0010011;
    $is_add = $dec_bits ==? 11'b0_000_0110011;
    
+   // ALU
+   $result[31:0] = 
+      $is_addi ? $src1_value + $imm :
+      $is_add ? $src1_value + $src2_value :
+      32'b0;
+   
    // Assert these to end simulation (before Makerchip cycle limit).
    *passed = 1'b0;
    *failed = *cyc_cnt > M4_MAX_CYC;
