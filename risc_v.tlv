@@ -141,6 +141,7 @@
       
    // Branch logic
    $taken_br =
+      $is_jal | $is_jalr ? 1'b1 :
       $is_beq ? $src1_value == $src2_value :
       $is_bne ? $src1_value != $src2_value :
       $is_blt ? ($src1_value < $src2_value) ^ ($src1_value[31] != $src2_value[31]) :
@@ -148,7 +149,7 @@
       $is_bltu ? $src1_value < $src2_value :
       $is_bgeu ? $src1_value >= $src2_value :
       1'b0;
-   $br_tgt_pc[31:0] = $pc + $imm;
+   $br_tgt_pc[31:0] = $is_jalr ? $src1_value + $imm : $pc + $imm;
    
    // Assert these to end simulation (before Makerchip cycle limit).
    m4+tb()
