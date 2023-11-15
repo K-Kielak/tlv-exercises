@@ -5,8 +5,6 @@
    m4_define(['M4_MAX_CYC'], 80)
    `define BYTE 4;
 \SV
-   // Macro providing required top-level module definition, random
-   // stimulus support, and Verilator config.
    m4_makerchip_module
    /* verilator lint_on WIDTH */
 \TLV

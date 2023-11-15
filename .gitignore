@@ -1,1 +1,9 @@
+# Makerchip files
 *.bak
+
+# Vivado files
+*.cache/
+*.sim/
+*.hw/
+*.ip_user_files/
+*.xpr
