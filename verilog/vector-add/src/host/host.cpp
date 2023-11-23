@@ -66,7 +66,7 @@ int main(int argc, char** argv) {
             std::cout << "Failed to program device[" << i << "] with xclbin file!\n";
         } else {
             std::cout << "Device[" << i << "]: program successful!\n";
-            OCL_CHECK(err, krnl_vadd = cl::Kernel(program, "krnl_vadd_rtl", &err));
+            OCL_CHECK(err, krnl_vadd = cl::Kernel(program, "kernel_rtl", &err));
             valid_device = true;
             break; // we break because we found a valid device
         }

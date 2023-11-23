@@ -89,35 +89,34 @@ endif
 
 ### BUILD ###
 build-dirs: 
-	mkdir $(BUILD_DIR)
-	mkdir $(TEMP_DIR)
+	mkdir $(BUILD_DIR) || true
+	mkdir $(TEMP_DIR) || true
 
 $(XO): build-dirs $(KERNEL_DIR)/package_kernel.tcl $(KERNEL_DIR)/gen_xo.tcl $(KERNEL_DIR)/hdl/*.sv $(KERNEL_DIR)/hdl/*.v 
 	$(VIVADO) -mode batch -source $(KERNEL_DIR)/gen_xo.tcl -tclargs $(XO) $(TARGET) $(PLATFORM) $(XSA) $(PACKAGE_DIR) $(TEMP_DIR)
 
-.PHONY: xclbin
-xclbin: $(XCLBIN)
 $(XCLBIN): $(XO)
 	$(VPP) $(VPP_FLAGS) -l $(VPP_LDFLAGS) --temp_dir $(TEMP_DIR) -o'$(LINK_XCLBIN)' $(XO)
 	$(VPP) -p $(LINK_XCLBIN) -t $(TARGET) --platform $(PLATFORM) --package.out_dir $(PACKAGE_DIR) -o $(XCLBIN)
 
-
 # TODO do we need | check-xrt
-# TODO remove phony, it's only for testing purposes
-.PHONY: compile-host
-compile-host: $(HOST)
 $(HOST): build-dirs $(HOST_SRCS) 
 	$(CXX) -o $@ $(HOST_SRCS) $(CXXFLAGS) $(LDFLAGS)
 
+	
 
 ### RUN ###
+$(TEMP_DIR)/emconfig.json: build-dirs
+	emconfigutil --platform $(PLATFORM) --od $(TEMP_DIR)
+
 .PHONY: run
-run: 
-ifeq ($(TARGET),$(filter $(TARGET),sw_emu hw_emu))
-	$(CP) $(EMCONFIG_DIR)/emconfig.json .
-	XCL_EMULATION_MODE=$(TARGET) $(EXECUTABLE) $(CMD_ARGS)
+run: $(XCLBIN) $(HOST) $(TEMP_DIR)/emconfig.json
+ifeq ($(TARGET), hw_emu)
+	cp -rf $(TEMP_DIR)/emconfig.json .
+	XCL_EMULATION_MODE=$(TARGET) $(HOST) $(XCLBIN)
+	rm -rf ./emconfig.json
 else
-	$(error Wrong TARGET for run, should be either sw_emu or hw_emu)
+	$(error Wrong TARGET for run, should be hw_emu)
 endif
  
 
