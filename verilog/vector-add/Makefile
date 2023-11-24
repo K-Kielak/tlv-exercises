@@ -3,38 +3,35 @@
 .PHONY: help
 help::
 	$(ECHO) "Makefile Usage:"
-	$(ECHO) "  make all TARGET=<hw_emu/hw> PLATFORM=<FPGA platform> EDGE_COMMON_SW=<rootfs and kernel image path>"
-	$(ECHO) "      Command to generate the design for specified Target and Shell."
+	$(ECHO) "  make clean TARGET=<hw_emu/hw>"
+	$(ECHO) "      Command to remove all generated files."
 	$(ECHO) ""
-	$(ECHO) "  make clean "
-	$(ECHO) "      Command to remove the generated non-hardware files."
-	$(ECHO) ""
-	$(ECHO) "  make cleanall"
-	$(ECHO) "      Command to remove all the generated files."
-	$(ECHO) ""
-	$(ECHO) "  make test PLATFORM=<FPGA platform>"
-	$(ECHO) "      Command to run the application. This is same as 'run' target but does not have any makefile dependency."
-	$(ECHO) ""
-	$(ECHO) "  make sd_card TARGET=<hw_emu/hw> PLATFORM=<FPGA platform> EDGE_COMMON_SW=<rootfs and kernel image path>"
-	$(ECHO) "      Command to prepare sd_card files."
-	$(ECHO) ""
-	$(ECHO) "  make run TARGET=<hw_emu/hw> PLATFORM=<FPGA platform> EDGE_COMMON_SW=<rootfs and kernel image path>"
+	$(ECHO) "  make run TARGET=<hw_emu>"
 	$(ECHO) "      Command to run application in emulation."
 	$(ECHO) ""
-	$(ECHO) "  make build TARGET=<hw_emu/hw> PLATFORM=<FPGA platform> EDGE_COMMON_SW=<rootfs and kernel image path>"
-	$(ECHO) "      Command to build xclbin application."
+	$(ECHO) "  make build TARGET=<hw_emu/hw>"
+	$(ECHO) "      Command to build the project."
 	$(ECHO) ""
-	$(ECHO) "  make host EDGE_COMMON_SW=<rootfs and kernel image path>"
-	$(ECHO) "      Command to build host application."
-	$(ECHO) "  EDGE_COMMON_SW is required for SoC shells"
+	$(ECHO) " Default TARGET=hw_emu"
 	$(ECHO) ""
 
-### Setting up Project Variables ###
-ifeq ($(PLATFORM), )
-$(error PLATFORM has to be defined)
+
+### Checking environment ###
+ifndef XILINX_VITIS
+$(error XILINX_VITIS variable is not set)
 endif
 
-TARGET := hw
+ifndef XILINX_XRT
+$(error XILINX_XRT variable is not set)
+endif
+
+ifndef AWS_PLATFORM
+$(error AWS_PLATFORM has to be defined)
+endif
+
+
+### Setting up Project Variables ###
+TARGET := hw_emu
 ifneq ($(TARGET),$(findstring $(TARGET), hw hw_emu))
 $(error TARGET has to be either hw or hw_emu)
 endif
@@ -47,7 +44,7 @@ SRC_DIR := $(PROJ_DIR)/src
 KERNEL_DIR := $(SRC_DIR)/kernel
 HOST_DIR := $(SRC_DIR)/host
 
-XSA := $(strip $(patsubst %.xpfm, % , $(shell basename $(PLATFORM))))
+XSA := $(strip $(patsubst %.xpfm, % , $(shell basename $(AWS_PLATFORM))))
 BUILD_DIR := $(PROJ_DIR)/build.$(TARGET).$(XSA)
 TEMP_DIR := $(BUILD_DIR)/temp
 PACKAGE_DIR := $(BUILD_DIR)/package
@@ -72,45 +69,41 @@ opencl_LDFLAGS=-L$(OPENCL_LIB) -lOpenCL -pthread
 
 # Compiler settings
 VPP := v++
-VPP_FLAGS += -t $(TARGET) --platform $(PLATFORM) --save-temps
+VPP_FLAGS += -t $(TARGET) --platform $(AWS_PLATFORM) --save-temps
 CXX := g++
 CXXFLAGS += $(opencl_CXXFLAGS) -Wall -O0 -g -std=c++1y -fmessage-length=0
 CXXFLAGS += -I$(SHARED_DIR)/xcl2
 LDFLAGS += $(opencl_LDFLAGS) -lrt -lstdc++
 
-### ENVIRONMENT CHECKS ###
-# TODO remember to use it
-# TODO do we need all those checks?
-check-xrt:
-ifndef XILINX_XRT
-	$(error XILINX_XRT variable is not set)
-endif
 
+### Build ###
+DIRS_READY := $(BUILD_DIR)/.dirs_created
+$(DIRS_READY):
+	mkdir $(BUILD_DIR) 
+	mkdir $(TEMP_DIR) 
+	touch $(DIRS_READY)
 
-### BUILD ###
-build-dirs: 
-	mkdir $(BUILD_DIR) || true
-	mkdir $(TEMP_DIR) || true
-
-$(XO): build-dirs $(KERNEL_DIR)/package_kernel.tcl $(KERNEL_DIR)/gen_xo.tcl $(KERNEL_DIR)/hdl/*.sv $(KERNEL_DIR)/hdl/*.v 
-	$(VIVADO) -mode batch -source $(KERNEL_DIR)/gen_xo.tcl -tclargs $(XO) $(TARGET) $(PLATFORM) $(XSA) $(PACKAGE_DIR) $(TEMP_DIR)
+$(XO): $(DIRS_READY) $(KERNEL_DIR)/package_kernel.tcl $(KERNEL_DIR)/gen_xo.tcl $(KERNEL_DIR)/hdl/*.sv $(KERNEL_DIR)/hdl/*.v 
+	$(VIVADO) -mode batch -source $(KERNEL_DIR)/gen_xo.tcl -tclargs $(XO) $(TARGET) $(AWS_PLATFORM) $(XSA) $(PACKAGE_DIR) $(TEMP_DIR)
 
 $(XCLBIN): $(XO)
 	$(VPP) $(VPP_FLAGS) -l $(VPP_LDFLAGS) --temp_dir $(TEMP_DIR) -o'$(LINK_XCLBIN)' $(XO)
-	$(VPP) -p $(LINK_XCLBIN) -t $(TARGET) --platform $(PLATFORM) --package.out_dir $(PACKAGE_DIR) -o $(XCLBIN)
+	$(VPP) -p $(LINK_XCLBIN) -t $(TARGET) --platform $(AWS_PLATFORM) --package.out_dir $(PACKAGE_DIR) -o $(XCLBIN)
 
-# TODO do we need | check-xrt
-$(HOST): build-dirs $(HOST_SRCS) 
+$(HOST): $(DIRS_READY) $(HOST_SRCS) 
 	$(CXX) -o $@ $(HOST_SRCS) $(CXXFLAGS) $(LDFLAGS)
 
-	
+BUILD_ARTIFACTS := $(XCLBIN) $(HOST)
+.PHONY: build
+build: $(BUILD_ARTIFACTS)
 
-### RUN ###
-$(TEMP_DIR)/emconfig.json: build-dirs
-	emconfigutil --platform $(PLATFORM) --od $(TEMP_DIR)
+
+### Run ###
+$(TEMP_DIR)/emconfig.json: $(DIRS_READY)
+	emconfigutil --platform $(AWS_PLATFORM) --od $(TEMP_DIR)
 
 .PHONY: run
-run: $(XCLBIN) $(HOST) $(TEMP_DIR)/emconfig.json
+run: $(BUILD_ARTIFACTS) $(TEMP_DIR)/emconfig.json
 ifeq ($(TARGET), hw_emu)
 	cp -rf $(TEMP_DIR)/emconfig.json .
 	XCL_EMULATION_MODE=$(TARGET) $(HOST) $(XCLBIN)
