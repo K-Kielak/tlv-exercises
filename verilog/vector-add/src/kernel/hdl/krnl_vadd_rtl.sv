@@ -211,7 +211,6 @@ inst_krnl_vadd_control_s_axi (
   .BRESP     ( s_axi_control_BRESP           ) ,
   .ACLK      ( ap_clk                        ) ,
   .ARESET    ( areset                        ) ,
-  .ACLK_EN   ( 1'b1                          ) ,
   .ap_start  ( ap_start                      ) ,
   .interrupt ( interrupt                     ) ,
   .ap_ready  ( ap_ready                      ) ,
