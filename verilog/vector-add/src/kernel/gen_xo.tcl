@@ -15,8 +15,8 @@
 #
 
 if { $::argc != 6 } {
-    puts "ERROR: Program \"$::argv0\" requires 4 arguments!\n"
-    puts "Usage: $::argv0 <xoname> <target> <xpfm_path> <device>\n"
+    puts "ERROR: Program \"$::argv0\" requires 6 arguments!\n"
+    puts "Usage: $::argv0 <xoname> <target> <xpfm_path> <device> <package_dir> <temp_dir>\n"
     exit
 }
 

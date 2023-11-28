@@ -26,7 +26,7 @@
 `default_nettype none
 `timescale 1 ns / 1 ps 
 
-module krnl_vadd_rtl_int #( 
+module krnl_vadd_rtl #( 
   parameter integer  C_S_AXI_CONTROL_DATA_WIDTH = 32,
   parameter integer  C_S_AXI_CONTROL_ADDR_WIDTH = 6,
   parameter integer  C_M_AXI_GMEM_ID_WIDTH = 1,
@@ -409,6 +409,6 @@ inst_axi_write_master (
   .bresp       ( m_axi_gmem_BRESP   ) 
 );
 
-endmodule : krnl_vadd_rtl_int
+endmodule : krnl_vadd_rtl
 
 `default_nettype wire
