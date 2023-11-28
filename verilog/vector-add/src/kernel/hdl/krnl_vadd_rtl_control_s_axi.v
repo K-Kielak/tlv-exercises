@@ -111,13 +111,12 @@ localparam
     WRDATA               = 2'd1,
     WRRESP               = 2'd2,
     RDIDLE               = 2'd0,
-    RDDATA               = 2'd1,
-    ADDR_BITS         = 6;
+    RDDATA               = 2'd1;
 
 //------------------------Local signal-------------------
     reg  [1:0]                    wstate = WRIDLE;
     reg  [1:0]                    wnext;
-    reg  [ADDR_BITS-1:0]          waddr;
+    reg  [C_S_AXI_ADDR_WIDTH-1:0]          waddr;
     wire [31:0]                   wmask;
     wire                          aw_hs;
     wire                          w_hs;
@@ -125,7 +124,7 @@ localparam
     reg  [1:0]                    rnext;
     reg  [31:0]                   rdata;
     wire                          ar_hs;
-    wire [ADDR_BITS-1:0]          raddr;
+    wire [C_S_AXI_ADDR_WIDTH-1:0]          raddr;
     // internal registers
     wire                          int_ap_idle;
     wire                          int_ap_ready;
@@ -185,7 +184,7 @@ end
 // waddr
 always @(posedge ACLK) begin
     if (aw_hs)
-        waddr <= AWADDR[ADDR_BITS-1:0];
+        waddr <= AWADDR[C_S_AXI_ADDR_WIDTH-1:0];
 end
 
 //------------------------AXI read fsm-------------------
@@ -194,7 +193,7 @@ assign RDATA   = rdata;
 assign RRESP   = 2'b00;  // OKAY
 assign RVALID  = (rstate == RDDATA);
 assign ar_hs   = ARVALID & ARREADY;
-assign raddr   = ARADDR[ADDR_BITS-1:0];
+assign raddr   = ARADDR[C_S_AXI_ADDR_WIDTH-1:0];
 
 // rstate
 always @(posedge ACLK) begin
@@ -213,7 +212,7 @@ always @(*) begin
             else
                 rnext = RDIDLE;
         RDDATA:
-            if (RREADY & RVALID)
+            if (RREADY)
                 rnext = RDIDLE;
             else
                 rnext = RDDATA;
