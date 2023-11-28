@@ -178,14 +178,10 @@ assign ap_start_pulse = ap_start & ~ap_start_r;
 // ap_idle is asserted when done is asserted, it is de-asserted when ap_start_pulse 
 // is asserted
 always @(posedge ap_clk) begin 
-  if (areset) begin 
-    ap_idle <= 1'b1;
-  end
-  else begin 
-    ap_idle <= ap_done        ? 1'b1 : 
-               ap_start_pulse ? 1'b0 : 
-                                ap_idle;
-  end
+  ap_idle <= areset ? 1'b1 :
+             ap_done ? 1'b1 : 
+             ap_start_pulse ? 1'b0 : 
+             ap_idle;
 end
 
 assign ap_ready = ap_done;
